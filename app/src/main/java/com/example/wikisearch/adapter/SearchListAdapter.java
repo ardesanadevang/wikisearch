@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide;
 import com.example.wikisearch.R;
 import com.example.wikisearch.activity.WebViewActivity;
 import com.example.wikisearch.model.WikiModel;
+import com.example.wikisearch.util.ConnectionDetector;
 import com.example.wikisearch.util.Util;
 import com.google.gson.Gson;
 
@@ -87,9 +88,12 @@ public class SearchListAdapter extends RecyclerView.Adapter<SearchListAdapter.My
         holder.root.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(activity, WebViewActivity.class);
-                i.putExtra("pageId", wikiModel.getPageid());
-                activity.startActivity(i);
+                ConnectionDetector cd = new ConnectionDetector(activity);
+                if (cd.isConnectingToInternet()) {
+                    Intent i = new Intent(activity, WebViewActivity.class);
+                    i.putExtra("pageId", wikiModel.getPageid());
+                    activity.startActivity(i);
+                }
             }
         });
     }

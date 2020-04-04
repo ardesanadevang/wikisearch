@@ -14,6 +14,7 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
 import com.example.wikisearch.R;
+import com.example.wikisearch.util.ConnectionDetector;
 import com.example.wikisearch.util.Util;
 import com.example.wikisearch.util.VolleyWebservices;
 import com.example.wikisearch.util.WebServices_Url;
@@ -26,6 +27,7 @@ public class WebViewActivity extends AppCompatActivity {
     WebView webView;
     Activity activity;
     VolleyWebservices volleyWebservices;
+    ConnectionDetector cd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +37,22 @@ public class WebViewActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         activity = WebViewActivity.this;
+
+        cd = new ConnectionDetector(activity);
+
         webView = findViewById(R.id.webView);
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        webSettings.setAppCachePath(getApplicationContext().getCacheDir().getAbsolutePath());
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAppCacheEnabled(true);
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webSettings.setAppCacheMaxSize(5 * 1024 * 1024); // 5MB
+
+        if (!cd.isConnectingToInternet()) { // loading offline
+            webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        }
+
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new AppWebViewClients());
 
@@ -79,13 +94,13 @@ public class WebViewActivity extends AppCompatActivity {
             if (progressDialog == null)
                 this.progressDialog = new ProgressDialog(activity);
 
-            if (!progressDialog.isShowing())
+            progressDialog.setMessage("Please wait...");
+            if (cd.isConnectingToInternet() && !progressDialog.isShowing())
                 progressDialog.show();
         }
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            // TODO Auto-generated method stub
             view.loadUrl(url);
             return true;
         }
@@ -93,7 +108,6 @@ public class WebViewActivity extends AppCompatActivity {
 
         @Override
         public void onPageFinished(WebView view, String url) {
-            // TODO Auto-generated method stub
             super.onPageFinished(view, url);
             if (progressDialog.isShowing())
                 progressDialog.dismiss();
